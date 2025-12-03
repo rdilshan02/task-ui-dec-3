@@ -4,7 +4,7 @@
     <div class="overflow-x-auto">
       <h2 class="text-center">{{ currentTime }}</h2>
 
-      <div class="grid md:grid-cols-2">
+      <div class="grid md:grid-cols-3">
         <div
           class="flex justify-center"
           v-for="row in rows"
@@ -18,18 +18,18 @@
               {{ row.location }}
             </h3>
             <div class="flex flex-row justify-between items-center mt-1">
-              <inline-svg
+              <img
                 :id="`fuel-tank-${row.deviceKey}`"
                 class="fuel-tank-icon"
                 :class="row.deviceKey"
-                :src="require('@/assets/images/diagrams/fuel-tank.svg')"
-                @loaded="svgMounted($event)"
+                :src="require('@/assets/images/diagrams/icon.png')"
               />
               <div class="flex flex-col justify-center items-center">
-                <div>Level {{ row.level }} cm</div>
-                <div class="text-center">Stock {{ row.volume }} litre</div>
+                <div>Fill Percentage</div>
+                <div class="text-center">{{ row.fillPercentage }}</div>
               </div>
             </div>
+            
             <div class="flex flex-row justify-between items-center mt-1">
               <div class="flex flex-col justify-center items-center">
                 <img
@@ -43,7 +43,7 @@
                   class="w-8"
                   :src="appIcons['wifi-' + row.communicationStatus]"
                 />
-                <p class="mb-0">{{ row.time }}</p>
+                <p class="mb-0">{{ formatTime(row.time) }}</p>
               </div>
             </div>
           </div>
@@ -73,16 +73,90 @@ export default {
   },
   methods: {
     fetchTableData() {
-      this.$store
-        .dispatch(`${this.MODULE_NAME}/fetchSummaryTable`, {
-          table: "tank-level",
-        })
-        .then((response) => {
-          this.rows = response;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+
+      const mockData = {
+        results: [
+          {
+            location: "DD6 (Digdola Big Pond)",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:15",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "6isrqimgjj8k",
+            changeIndicator: "down"
+          },
+          {
+            location: "DD7 (Digdola Stock Pond)",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:15",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "jlk45gfd88hk",
+            changeIndicator: "down"
+          },
+          {
+            location: "DD11 (Digdola Boundary Pond)",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:15",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "98fhgk54lmn0",
+            changeIndicator: "down"
+          },
+          {
+            location: "MNC 2 (MNC Big Pond)",
+            fillPercentage: "0 %",
+            battery: "3.84",
+            time: "2025-10-19 22:09:00",
+            communicationStatus: "red",
+            batteryStatus: "green",
+            deviceKey: "b67dfhgnc934",
+            changeIndicator: null
+          },
+          {
+            location: "MNC 3 (MNC Stock Pond)",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:16",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "x9fg46jklzop",
+            changeIndicator: null
+          },
+          {
+            location: "Mill 1500 Pond",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:16",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "qwe89tyui56z",
+            changeIndicator: "down"
+          },
+          {
+            location: "Mill 750 Pond",
+            fillPercentage: "_ _",
+            battery: "_ _",
+            time: "2025-01-25 09:21:16",
+            communicationStatus: "red",
+            batteryStatus: "gray",
+            deviceKey: "ghr45yplq290",
+            changeIndicator: "down"
+          }
+        ]
+      };
+
+     
+      this.rows = mockData.results;
+
+
+    },
+    formatTime(timeString) {
+      
+      return this.$moment(timeString).format("YYYY-MM-DD HH:mm:ss");
     },
     updateTime() {
       this.currentTime = this.$moment().format("HH:mm:ss  DD MMMM YYYY");
@@ -95,23 +169,25 @@ export default {
         },
       });
     },
-    updateLevelIndicator(deviceKey, level, maxLevel) {
+    updateLevelIndicator(deviceKey, fillPercentage) {
       const rect = document.querySelector(
         `#fuel-tank-${deviceKey} #level-indicator`
       );
       if (rect) {
-        const maxHeight = 115; // Height when level is zero
-        const minHeight = 0; // Height when at max level
+        const maxHeight = 115; 
+        
+        
+        const level = parseInt(fillPercentage);
+        const displayLevel = Math.min(level, 100); 
 
-        const calculatedHeight = maxHeight - (level / maxLevel) * maxHeight;
+        const calculatedHeight = maxHeight - (displayLevel / 100) * maxHeight;
 
-        // rect.setAttribute("height", calculatedHeight);
         rect.style.height = `${calculatedHeight}px`;
       }
     },
     svgMounted(event) {
       this.rows.forEach((row) => {
-        this.updateLevelIndicator(row.deviceKey, row.level, row.maxLevel);
+        this.updateLevelIndicator(row.deviceKey, row.fillPercentage);
       });
     },
   },
